@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ShoeZone - Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="light-mode">
+  <header class="classic-header">
+    <div class="container classic-header-inner">
+      <div class="logo-container">
+        <a href="index.html"><h1>ShoeZone</h1></a>      </div>
+      <nav class="main-nav">
+        <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
+        <a href="shop.html" class="nav-link active"><i class="fas fa-shopping-bag"></i> Shop</a>
+        <a href="checkout.html" class="nav-link"><i class="fas fa-shoe-prints"></i>  Checkout</a>
+      </nav>
+      <div class="header-right">
+        <div class="search-bar">
+          <input type="text" id="search-input" placeholder="Search shoes..." />
+          <button class="btn-icon"><i class="fas fa-search"></i></button>
+        </div>
+        <div class="icon-group">
+          <button id="theme-toggle" class="btn-icon"><i class="fas fa-moon"></i></button>
+          <div class="cart-container">
+            <button id="cart-btn" class="btn-icon"><i class="fas fa-shopping-cart"></i></button>
+            <span id="cart-count" class="badge">0</span>
+          </div>
+          <div class="wishlist-container">
+            <button id="wishlist-btn" class="btn-icon"><i class="fas fa-heart"></i></button>
+            <span id="wishlist-count" class="badge">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container container">
+    <section class="filters-section">
+      <div class="tags-container">
+        <button class="tag-btn active" data-category="all">All</button>
+        <button class="tag-btn" data-category="Men">Men</button>
+        <button class="tag-btn" data-category="Women">Women</button>
+        <button class="tag-btn" data-category="Kids">Kids</button>
+      </div>
+      <div class="filter-panel">
+  <h4>Filter by Brand</h4>
+  <div id="brand-filters" class="brand-checkboxes" style="text-align: justify;">
+    <!-- checkboxes generate din JS -->
+     
+  </div>
+</div>
+
+    </section>
+
+    <section class="products-section">
+      <div id="products-grid" class="products-grid"></div>
+    </section>
+  </main>
+
+  <!-- Modal produs -->
+  <div id="product-modal" class="modal" style="display:none;">
+    <div class="modal-content" style="background:#fff; padding:20px; max-width:800px; margin:auto; position:relative; border-radius:8px;">
+      <button id="modal-close" style="position:absolute;top:10px;right:10px;font-size:18px;background:none;border:none;cursor:pointer;">&times;</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Popup-uri pentru Cart și Wishlist -->
+  <div id="cart-popup" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button onclick="document.getElementById('cart-popup').style.display='none'" class="btn-icon" style="position:absolute;top:10px;right:10px">&times;</button>
+      <h2>Your Cart</h2>
+      <div id="cart-popup-body"></div>
+    </div>
+  </div>
+
+  <div id="wishlist-popup" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button onclick="document.getElementById('wishlist-popup').style.display='none'" class="btn-icon" style="position:absolute;top:10px;right:10px">&times;</button>
+      <h2>Your Wishlist</h2>
+      <div id="wishlist-popup-body"></div>
+    </div>
+  </div>
+
+  <footer style="text-decoration-line: none;">
+    <div class="footer-cols">
+      <div>
+        <div class="logo">👟</div>
+        <p> 2025 Chisinau , Moldova</p>
+        <p>&copy; ShoeZone</p>
+      </div>
+      <div>
+        <h4>Main Menu</h4>
+        <ul><li><a href="index.html" style="color: #fff;">Home</a></li><li><a href="team.html" style="color: #fff;">About</a></li><li><a href="shop.html" style="color: #fff;">Shop</a></li><li><a href="help.html" style="color: white;">Help</a></li></ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul><li>The Company</li><li>Careers</li><li>Press</li></ul>
+      </div>
+      <div>
+        <h4>Discover</h4>
+        <ul><li><a href="team.html" style="color: #fff;">The team</a></li><li>Our History</li><li>Brand Motto</li></ul>
+      </div>
+      <div>
+        <h4>Find Us On</h4>
+        <ul><li><a href="https://www.facebook.com/?locale=ro_RO" style="color: #fff;">Facebook</a></li><li><a href="https://x.com/" style="color: #fff;">X / Twitter</a></li><li><a href="https://www.instagram.com/" style="color: #fff;">Instagram</a></li></ul>
+      </div>
+    </div>
+  </footer>
+
+
+  <script src="products.js"></script>
+  <script>
+    const grid = document.getElementById('products-grid');
+    const buttons = document.querySelectorAll('.tag-btn');
+    const cartCount = document.getElementById('cart-count');
+    const modal = document.getElementById('product-modal');
+    const modalBody = document.getElementById('modal-body');
+    const modalClose = document.getElementById('modal-close');
+
+    const cartBtnEl = document.getElementById('cart-btn');
+    const wishlistBtnEl = document.getElementById('wishlist-btn');
+    const cartPopupBody = document.getElementById('cart-popup-body');
+    const wishlistPopupBody = document.getElementById('wishlist-popup-body');
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+
+    function saveCart() {
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartCount();
+    }
+
+    function updateCartCount() {
+      const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+      cartCount.textContent = total;
+    }
+
+    function openModal(product) {
+      modalBody.innerHTML = `
+        <h2>${product.name}</h2>
+        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+          <img src="${product.image}" alt="${product.name}" style="width:200px;height:auto;border-radius:8px;background:#f0f0f0;">
+          <div style="flex:1;min-width:250px;">
+            <h3 style="color:#4caf50">$${product.price.toFixed(2)}</h3>
+            <p>${product.description}</p>
+            <p><strong>Category:</strong> ${product.category}</p>
+            <p>${generateStars(product.rating)} <span style="font-size:14px;color:#777">(${product.ratingCount})</span></p>
+
+            <div style="margin:10px 0;">
+              <label for="size-select"><strong>Size:</strong></label>
+              <select id="size-select">
+                <option value="">Select size</option>
+                <option value="38">38</option>
+                <option value="39">39</option>
+                <option value="40">40</option>
+                <option value="41">41</option>
+                <option value="42">42</option>
+              </select>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+              <button id="qty-dec" class="btn-icon">-</button>
+              <input type="number" id="qty-input" value="1" min="1" style="width:50px;text-align:center;">
+              <button id="qty-inc" class="btn-icon">+</button>
+            </div>
+
+            <button class="btn-primary" id="modal-add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div style="margin-top:30px;">
+          <h3>Leave a Review</h3>
+          <div id="review-stars" style="font-size:24px;color:#ffc107;cursor:pointer;margin-bottom:10px;"></div>
+          <textarea id="review-text" placeholder="Write your review here..." rows="4" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:5px;"></textarea>
+          <button id="submit-review" class="btn-primary" style="margin-top:10px;">Submit Review</button>
+        </div>
+      `;
+
+      modal.style.display = 'block';
+
+      document.getElementById('qty-dec').onclick = () => {
+        const input = document.getElementById('qty-input');
+        input.value = Math.max(1, parseInt(input.value) - 1);
+      };
+
+      document.getElementById('qty-inc').onclick = () => {
+        const input = document.getElementById('qty-input');
+        input.value = parseInt(input.value) + 1;
+      };
+
+      const reviewStars = document.getElementById('review-stars');
+      let selectedRating = 0;
+      reviewStars.innerHTML = Array.from({ length: 5 }, (_, i) => `<i class='far fa-star' data-index='${i}'></i>`).join('');
+      reviewStars.querySelectorAll('i').forEach(star => {
+        star.addEventListener('mouseover', () => {
+          const idx = parseInt(star.dataset.index);
+          reviewStars.querySelectorAll('i').forEach((s, i) => {
+            s.className = i <= idx ? 'fas fa-star' : 'far fa-star';
+          });
+        });
+        star.addEventListener('click', () => {
+          selectedRating = parseInt(star.dataset.index) + 1;
+        });
+      });
+
+      document.getElementById('submit-review').onclick = () => {
+        const text = document.getElementById('review-text').value.trim();
+        if (selectedRating === 0 || text === '') {
+          alert('Please provide a rating and a comment.');
+        } else {
+          alert(`Thank you! Your ${selectedRating}-star review was submitted.`);
+        }
+      };
+
+      document.getElementById('modal-add-to-cart').onclick = () => {
+        const size = document.getElementById('size-select').value;
+        const qty = parseInt(document.getElementById('qty-input').value);
+        if (!size) {
+          alert('Please select a size.');
+          return;
+        }
+        const existing = cart.find(p => p.id === product.id && p.size === size);
+        if (existing) {
+          existing.quantity += qty;
+        } else {
+          cart.push({ ...product, size, quantity: qty });
+        }
+        saveCart();
+        alert(`${product.name} (Size ${size}) x${qty} added to cart!`);
+        modal.style.display = 'none';
+      };
+    }
+
+    function generateStars(rating) {
+      const full = Math.floor(rating);
+      return Array.from({ length: 5 }, (_, i) => i < full ? '★' : '☆').join('');
+    }
+
+    modalClose.onclick = () => modal.style.display = 'none';
+    window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderProducts(btn.dataset.category);
+      });
+    });
+
+    function generateBrandFilters() {
+  const container = document.getElementById("brand-filters");
+  const brands = [...new Set(productsData.map(p => p.brand))];
+  container.innerHTML = brands.map(brand => `
+    <label>
+      <input type="checkbox" name="brand" value="${brand}"> ${brand}
+    </label>
+  `).join("");
+
+  container.querySelectorAll("input").forEach(checkbox => {
+    checkbox.addEventListener("change", applyFilters);
+  });
+}
+
+function applyFilters() {
+  const checkedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(i => i.value);
+  const activeCategory = document.querySelector(".tag-btn.active").dataset.category;
+
+  let filtered = productsData;
+
+  if (activeCategory !== "all") {
+    filtered = filtered.filter(p => p.category === activeCategory);
+  }
+
+  if (checkedBrands.length > 0) {
+    filtered = filtered.filter(p => checkedBrands.includes(p.brand));
+  }
+
+  renderProductsFiltered(filtered);
+}
+
+function renderProductsFiltered(products) {
+  grid.innerHTML = "";
+  products.forEach(product => {
+    const card = document.createElement("div");
+    card.className = "product-card";
+    card.innerHTML = `
+      <div class="product-image"><img src="${product.image}" alt="${product.name}"></div>
+      <div class="product-info">
+        <div class="product-category">${product.category}</div>
+        <h3 class="product-name">${product.name}</h3>
+        <div class="product-brand">By ${product.brand}</div>
+        <div class="product-rating">${generateStars(product.rating)} (${product.ratingCount})</div>
+        <div class="product-price"><span class="current-price">$${product.price.toFixed(2)}</span></div>
+      </div>
+    `;
+    card.addEventListener('click', () => openModal(product));
+    grid.appendChild(card);
+  });
+}
+
+
+    function renderProducts(filter) {
+      grid.innerHTML = '';
+      const filtered = filter === 'all' ? productsData : productsData.filter(p => p.category === filter);
+
+      filtered.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <div class="product-image"><img src="${product.image}" alt="${product.name}"></div>
+          <div class="product-info">
+            <div class="product-category">${product.category}</div>
+            <h3 class="product-name">${product.name}</h3>
+            <div class="product-brand">By ${product.brand}</div>
+            <div class="product-rating">${generateStars(product.rating)} (${product.ratingCount})</div>
+            <div class="product-price"><span class="current-price">$${product.price.toFixed(2)}</span></div>
+          </div>
+        `;
+        card.addEventListener('click', () => openModal(product));
+        grid.appendChild(card);
+      });
+    }
+
+    cartBtnEl.addEventListener('click', () => {
+      cartPopupBody.innerHTML = cart.length === 0
+        ? '<p>Your cart is empty.</p>'
+        : cart.map(item => `
+          <div style='margin-bottom:10px;'>
+            <strong>${item.name}</strong><br>
+            Size: ${item.size} | Qty: ${item.quantity} | $${(item.price * item.quantity).toFixed(2)}
+          </div>
+        `).join('');
+      document.getElementById('cart-popup').style.display = 'flex';
+    });
+
+    wishlistBtnEl.addEventListener('click', () => {
+      wishlistPopupBody.innerHTML = wishlist.length === 0
+        ? '<p>Your wishlist is empty.</p>'
+        : wishlist.map(item => `
+          <div style='margin-bottom:10px;'>
+            <strong>${item.name}</strong><br>
+            $${item.price.toFixed(2)}
+          </div>
+        `).join('');
+      document.getElementById('wishlist-popup').style.display = 'flex';
+    });
+
+    document.getElementById("search-input").addEventListener("input", function () {
+  const searchTerm = this.value.toLowerCase();
+  const filtered = productsData.filter(product =>
+    product.name.toLowerCase().includes(searchTerm) ||
+    product.category.toLowerCase().includes(searchTerm) ||
+    product.brand.toLowerCase().includes(searchTerm)
+  );
+
+  grid.innerHTML = "";
+
+  filtered.forEach(product => {
+    const card = document.createElement("div");
+    card.className = "product-card";
+    card.innerHTML = `
+      <div class="product-image"><img src="${product.image}" alt="${product.name}"></div>
+      <div class="product-info">
+        <div class="product-category">${product.category}</div>
+        <h3 class="product-name">${product.name}</h3>
+        <div class="product-brand">By ${product.brand}</div>
+        <div class="product-rating">${generateStars(product.rating)} (${product.ratingCount})</div>
+        <div class="product-price"><span class="current-price">$${product.price.toFixed(2)}</span></div>
+      </div>
+    `;
+    card.addEventListener('click', () => openModal(product));
+    grid.appendChild(card);
+
+  });
+
+  wishlistPopupBody.innerHTML = wishlist.length === 0
+        ? '<p>Your wishlist is empty.</p>'
+        : wishlist.map(item => `
+          <div style='margin-bottom:10px;' class="wishlist-item">
+            <strong>${item.name}</strong><br>
+            Category: ${item.category} | $${item.price.toFixed(2)}
+          </div>
+        `).join('');
+      document.getElementById('wishlist-popup').style.display = 'flex';
+    });
+
+    // Funcție pentru a actualiza numărul de produse din wishlist
+    function updateWishlistCount() {
+      document.getElementById('wishlist-count').textContent = wishlist.length;
+    }
+
+    // Toggle dark/light mode
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const body = document.body;
+      body.classList.toggle('dark-mode');
+      body.classList.toggle('light-mode');
+      const icon = document.querySelector('#theme-toggle i');
+      icon.classList.toggle('fa-moon');
+      icon.classList.toggle('fa-sun');
+    });
+
+    // Inițializări
+    generateBrandFilters();
+    renderProducts('all');
+    updateCartCount();
+    updateWishlistCount();
+
+
+
+
+    renderProducts('all');
+    updateCartCount();
+
+    document.querySelectorAll('.filter-brand input').forEach(input => {
+  input.addEventListener('change', function () {
+    const checkedBrands = Array.from(document.querySelectorAll('.filter-brand input:checked'))
+                               .map(input => input.value);
+    
+    const filteredProducts = checkedBrands.length === 0 
+      ? productsData.slice(0, 4)
+      : productsData.filter(product => checkedBrands.includes(product.brand));
+
+    productsGrid.innerHTML = "";
+    filteredProducts.forEach(product => {
+      const div = document.createElement("div");
+      div.className = "product-card";
+      div.innerHTML = `
+        <div class="product-image"><img src="${product.image}" alt="${product.name}"></div>
+        <div class="product-info">
+          <div class="product-category">${product.category}</div>
+          <h3 class="product-name">${product.name}</h3>
+          <div class="product-brand">By ${product.brand}</div>
+          <div class="product-price"><span class="current-price">$${product.price.toFixed(2)}</span></div>
+        </div>
+      `;
+      productsGrid.appendChild(div);
+    });
+  });
+});
+
+
+  </script>
+</body>
+</html>
